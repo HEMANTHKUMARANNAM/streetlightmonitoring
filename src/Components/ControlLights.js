@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { database, ref, get, update } from "../firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
+
 const ControlLights = () => {
   const [lights, setLights] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -29,22 +30,24 @@ const ControlLights = () => {
 
   // Handle "Select All" toggle (on/off all lights except damaged ones)
   const toggleAllLights = async () => {
-    setSelectAll((prev) => !prev);
-    const updatedLights = lights.map((light) => {
-      if (!light.isDamaged) {
-        return { ...light, isOn: !selectAll };
-      }
-      return light; // Do not change the state of damaged lights
-    });
+    // Compute the desired state based on current `selectAll`
+    const newSelectAll = !selectAll;
 
-    updatedLights.forEach(async (light) => {
+    // Update state for all non-damaged lights in Firebase
+    const updates = {};
+    lights.forEach((light) => {
       if (!light.isDamaged) {
-        const lightRef = ref(database, `streetlights/${light.id}`);
-        await update(lightRef, { isOn: light.isOn });
+        updates[`streetlights/${light.id}/isOn`] = newSelectAll;
       }
     });
 
-    fetchLights(); // Refresh lights after updating
+    // Perform a batch update to Firebase
+    const lightsRef = ref(database);
+    await update(lightsRef, updates);
+
+    // Update local state
+    setSelectAll(newSelectAll);
+    fetchLights(); // Refresh the lights data
   };
 
   return (
@@ -56,7 +59,6 @@ const ControlLights = () => {
         <button
           className={`btn btn-${selectAll ? "danger" : "success"} btn-lg`}
           onClick={toggleAllLights}
-          disabled={lights.some((light) => light.isDamaged)}
         >
           <i className={`bi bi-toggle-${selectAll ? "off" : "on"}`}></i>{" "}
           {selectAll ? "Turn Off All" : "Turn On All"}
@@ -99,18 +101,13 @@ const ControlLights = () => {
                   </strong>
                 </p>
 
-                {/* Individual Light Toggle Button with Bulb Icons */}
+                {/* Individual Light Toggle Button */}
                 <button
                   className={`btn btn-${light.isOn ? "danger" : "primary"} btn-sm`}
                   onClick={() => toggleLight(light.id, light.isOn)}
                   disabled={light.isDamaged}
                 >
-                  <i
-                    className={`bi ${
-                      light.isOn ? "bi-lightbulb-off" : "bi-lightbulb-on"
-                    }`}
-                    style={{ fontSize: "1.5rem" }}
-                  ></i>{" "}
+
                   {light.isDamaged
                     ? "Fix Needed"
                     : light.isOn
