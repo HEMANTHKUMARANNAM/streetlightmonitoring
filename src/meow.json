@@ -1,0 +1,23 @@
+{
+    "streetlights": {
+      "light_1": {
+        "name": "Streetlight 1",
+        "isOn": true,
+        "isDamaged": false,
+        "location": "Main Street"
+      },
+      "light_2": {
+        "name": "Streetlight 2",
+        "isOn": false,
+        "isDamaged": true,
+        "location": "Park Avenue"
+      },
+      "light_3": {
+        "name": "Streetlight 3",
+        "isOn": true,
+        "isDamaged": false,
+        "location": "Highway 101"
+      }
+    }
+  }
+  
